@@ -7,6 +7,10 @@
     <!-- Tailwind CSS para los estilos -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Firebase SDKs (Versión Compat para proyectos de un solo archivo) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <!-- React y ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -25,6 +29,22 @@
     <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef } = React;
 
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7hOs_p6TBA5Cef2mLz7qJgjvWz4mlcno",
+            authDomain: "simulador-cumandes.firebaseapp.com",
+            projectId: "simulador-cumandes",
+            storageBucket: "simulador-cumandes.firebasestorage.app",
+            messagingSenderId: "842704294742",
+            appId: "1:842704294742:web:6981b7414a5feeed977cf7"
+        };
+
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
         // --- Íconos en formato SVG ---
         const IconSettings = ({className}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
         const IconBattery = ({className}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="10" x="2" y="7" rx="2" ry="2"></rect><line x1="22" x2="22" y1="11" y2="13"></line></svg>;
@@ -41,32 +61,32 @@
         const IconX = ({className}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
         const IconCheck = ({className}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>;
 
-        // --- URLs DE AUDIOS (Rutas Locales) ---
+        // --- URLs DE AUDIOS (Rutas Locales para GitHub) ---
         const AUDIO_URLS = {
-            crank: './audios/arranque.mp3', // Motor arrancando
-            run: './audios/ralenti.mp3',    // Motor diésel en ralentí
-            fail: './audios/fallo.mp3'      // Motor apagándose o fallando
+            crank: './audios/arranque.mp3', 
+            run: './audios/ralenti.mp3',    
+            fail: './audios/fallo.mp3'      
         };
 
         // --- CÓDIGOS GANADORES SEPARADOS POR DÍA ---
         const WINNING_CODES_BY_DAY = {
             0: ['991', '992', '993', '994', '995'], // Día 0: Demo y Capacitación
-            1: ['125', '482', '709', '331', '954'],
-            2: ['246', '518', '893', '072', '667'],
-            3: ['039', '314', '685', '920', '471']
+            1: ['125', '482', '709', '331', '954'], // Día 1
+            2: ['246', '518', '893', '072', '667'], // Día 2
+            3: ['039', '314', '685', '920', '471']  // Día 3
         };
 
         function SimuladorApp() {
             const [code, setCode] = useState('');
-            const [status, setStatus] = useState('idle'); // idle, cranking, success, fail, already_used
+            const [status, setStatus] = useState('idle'); 
             
             const [rpm, setRpm] = useState(0);
             const [temp, setTemp] = useState(0); 
             const [oil, setOil] = useState(0);   
 
             // Estados de Control
-            const [activeDay, setActiveDay] = useState(0); // Arranca en Día 0 (Demo) por defecto
-            const [usedCodes, setUsedCodes] = useState([]);
+            const [activeDay, setActiveDay] = useState(0); 
+            const [usedCodes, setUsedCodes] = useState([]); // Ahora se alimentará de Firebase
             const [clickCount, setClickCount] = useState(0); 
             const [showModal, setShowModal] = useState(false);
             const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -77,14 +97,26 @@
             const audioFailRef = useRef(null);
             const audioContextRef = useRef(null);
 
+            // --- ESCUCHAR A FIREBASE EN TIEMPO REAL ---
+            useEffect(() => {
+                // onSnapshot nos permite estar conectados a la base de datos en tiempo real
+                const unsubscribe = db.collection('llaves_usadas').onSnapshot((snapshot) => {
+                    // Extraemos los IDs de los documentos (que son los códigos) y los guardamos en memoria
+                    const codesFromDB = snapshot.docs.map(doc => doc.id);
+                    setUsedCodes(codesFromDB);
+                }, (error) => {
+                    console.error("Error conectando a Firebase:", error);
+                });
+
+                return () => unsubscribe();
+            }, []);
+
             // Inicializar audios de forma segura
             useEffect(() => {
-                // Creamos los objetos de audio
                 const crankAudio = new Audio(AUDIO_URLS.crank);
                 const runAudio = new Audio(AUDIO_URLS.run);
                 const failAudio = new Audio(AUDIO_URLS.fail);
 
-                // Forzamos la carga previa (preload)
                 crankAudio.preload = "auto";
                 runAudio.preload = "auto";
                 failAudio.preload = "auto";
@@ -94,7 +126,6 @@
                 audioRunRef.current = runAudio;
                 audioFailRef.current = failAudio;
 
-                // Cleanup
                 return () => {
                     crankAudio.pause();
                     runAudio.pause();
@@ -102,34 +133,28 @@
                 };
             }, []);
 
-            // Función ultra-agresiva para desbloquear el audio en Safari/Chrome/iOS
             const unlockAudioContext = () => {
-                // Si ya creamos el contexto, no lo hacemos de nuevo
                 if (audioContextRef.current) return;
-                
                 try {
-                    // Creamos un contexto de audio falso (esto engaña al navegador)
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     if (AudioContext) {
                         const ctx = new AudioContext();
                         audioContextRef.current = ctx;
 
-                        // Reproducimos 1 milisegundo de silencio en cada canal
                         [audioCrankRef.current, audioRunRef.current, audioFailRef.current].forEach(audio => {
                             if (audio) {
-                                audio.volume = 0; // Mute temporal
+                                audio.volume = 0; 
                                 const p = audio.play();
                                 if (p !== undefined) {
                                     p.then(() => {
                                         audio.pause();
                                         audio.currentTime = 0;
-                                        audio.volume = 1; // Restauramos volumen
+                                        audio.volume = 1; 
                                     }).catch(e => console.log("Pre-play bloqueado:", e));
                                 }
                             }
                         });
                         
-                        // Opcional: un oscilador de silencio en el contexto (garantía iOS)
                         const buffer = ctx.createBuffer(1, 1, 22050);
                         const source = ctx.createBufferSource();
                         source.buffer = buffer;
@@ -142,11 +167,9 @@
                 }
             };
 
-            // Agregamos un listener global para el primer toque en la pantalla
             useEffect(() => {
                 const handleFirstInteraction = () => {
                     unlockAudioContext();
-                    // Una vez desbloqueado, quitamos el listener para no gastar recursos
                     document.removeEventListener('touchstart', handleFirstInteraction);
                     document.removeEventListener('click', handleFirstInteraction);
                     document.removeEventListener('keydown', handleFirstInteraction);
@@ -208,43 +231,30 @@
                         const upperCode = code.toUpperCase();
                         
                         // --- CÓDIGOS DE PRUEBA (TRAINING TEAM) ---
+                        // Nota: Estos NO se guardan en Firebase
                         if (upperCode === '1111') {
-                            setRpm(0);     
-                            setTemp(0);
-                            setOil(0);
-                            stopAllAudio();
-                            playAudio(audioFailRef);
-                            setStatus('fail');
-                            setShowModal(true);
-                            return;
+                            setRpm(0); setTemp(0); setOil(0);
+                            stopAllAudio(); playAudio(audioFailRef);
+                            setStatus('fail'); setShowModal(true); return;
                         }
                         
                         if (upperCode === '2222') {
-                            setRpm(800);   
-                            setTemp(50);   
-                            setOil(60);    
-                            stopAllAudio();
-                            playAudio(audioRunRef);
-                            setStatus('success');
-                            setShowModal(true);
-                            return;
+                            setRpm(800); setTemp(50); setOil(60);    
+                            stopAllAudio(); playAudio(audioRunRef);
+                            setStatus('success'); setShowModal(true); return;
                         }
 
                         if (upperCode === '3333') {
-                            setRpm(0);     
-                            setTemp(0);
-                            setOil(0);
-                            stopAllAudio();
-                            playAudio(audioFailRef);
-                            setStatus('already_used'); 
-                            setShowModal(true);
-                            return;
+                            setRpm(0); setTemp(0); setOil(0);
+                            stopAllAudio(); playAudio(audioFailRef);
+                            setStatus('already_used'); setShowModal(true); return;
                         }
 
                         // --- LÓGICA REAL (EVENTO) ---
                         const currentWinningCodes = WINNING_CODES_BY_DAY[activeDay];
                         
                         if (currentWinningCodes.includes(upperCode)) {
+                            // Validamos contra la lista que viene de Firebase
                             if (usedCodes.includes(upperCode)) {
                                 setRpm(0);     
                                 setTemp(0);
@@ -254,7 +264,7 @@
                                 setStatus('already_used'); 
                                 setShowModal(true);
                             } else {
-                                setRpm(800);   // Ralentí
+                                setRpm(800);   
                                 setTemp(50);   
                                 setOil(60);    
                                 stopAllAudio();
@@ -262,7 +272,13 @@
                                 setStatus('success');
                                 setShowModal(true);
                                 
-                                setUsedCodes(prev => [...prev, upperCode]);
+                                // --- GUARDAR EN FIREBASE ---
+                                db.collection('llaves_usadas').doc(upperCode).set({
+                                    usada_el: firebase.firestore.FieldValue.serverTimestamp(),
+                                    dia_evento: activeDay
+                                }).catch(error => {
+                                    console.error("Error guardando llave en Firebase: ", error);
+                                });
                             }
                         } else {
                             setRpm(0);     
@@ -280,7 +296,7 @@
                     clearInterval(rpmInterval);
                     clearTimeout(gaugeTimeout);
                 };
-            }, [status, code, activeDay]);
+            }, [status, code, activeDay, usedCodes]);
 
             const isNumDisabled = (numStr) => {
                 if (status !== 'idle') return true;
@@ -292,7 +308,7 @@
             };
 
             const handleKeypadPress = (num) => {
-                unlockAudioContext(); // Corregido: Llamada a la función correcta
+                unlockAudioContext(); 
                 if (status !== 'idle') return;
                 const newCode = code + num;
                 
@@ -302,14 +318,14 @@
             };
 
             const handleDelete = () => {
-                unlockAudioContext(); // Corregido
+                unlockAudioContext(); 
                 if (status === 'idle') {
                     setCode(prev => prev.slice(0, -1));
                 }
             };
 
             const handleRandomCode = () => {
-                unlockAudioContext(); // Corregido
+                unlockAudioContext(); 
                 if (status === 'idle') {
                     const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
                     setCode(randomNum);
@@ -317,7 +333,7 @@
             };
 
             const handleStart = () => {
-                unlockAudioContext(); // Corregido
+                unlockAudioContext(); 
                 if (code.length === 3 || code.length === 4) {
                     setStatus('cranking');
                 } else if (code.length > 0 && code.length < 3) {
@@ -460,19 +476,30 @@
                                         </span>
                                     ))}
                                 </div>
-                                <p className="text-[10px] text-neutral-500 mt-3">* Los tachados ya fueron reclamados hoy.</p>
+                                <p className="text-[10px] text-neutral-500 mt-3">* Los tachados ya están quemados en la base de datos.</p>
                             </div>
 
                             <div className="flex flex-col gap-3">
                                 <button 
-                                    onClick={() => {
-                                        if(window.confirm('¿Seguro que deseas borrar el historial de llaves usadas?')) {
-                                            setUsedCodes([]); 
+                                    onClick={async () => {
+                                        if(window.confirm('¿Seguro que deseas BORRAR DE LA NUBE el historial de todas las llaves usadas?')) {
+                                            try {
+                                                // Obtenemos todos los documentos de la colección y los borramos
+                                                const snapshot = await db.collection('llaves_usadas').get();
+                                                const batch = db.batch();
+                                                snapshot.docs.forEach((doc) => {
+                                                    batch.delete(doc.ref);
+                                                });
+                                                await batch.commit();
+                                            } catch (error) {
+                                                console.error("Error al borrar historial: ", error);
+                                                alert("Hubo un error borrando el historial de la nube.");
+                                            }
                                         }
                                     }}
                                     className="w-full py-3 rounded-lg font-bold text-sm bg-neutral-800 text-red-400 hover:bg-red-900/30 border border-neutral-700 transition-colors"
                                 >
-                                    BORRAR HISTORIAL DE USO
+                                    BORRAR HISTORIAL DE LA NUBE
                                 </button>
                                 <button 
                                     onClick={() => setShowAdminPanel(false)}
@@ -640,7 +667,7 @@
                                                 <button
                                                     key={num}
                                                     onClick={() => handleKeypadPress(num.toString())}
-                                                    disabled={isNumDisabled(num.toString())}
+                                                    disabled={code.length >= 4 || (code.length === 3 && !['111', '222', '333'].includes(code))}
                                                     className="bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-white font-bold text-xl sm:text-2xl py-4 sm:py-6 rounded-lg shadow-[0_4px_0_rgb(23,23,23)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50"
                                                 >
                                                     {num}
@@ -655,7 +682,7 @@
                                             </button>
                                             <button
                                                 onClick={() => handleKeypadPress('0')}
-                                                disabled={isNumDisabled('0')}
+                                                disabled={code.length >= 4 || (code.length === 3 && !['111', '222', '333'].includes(code))}
                                                 className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xl sm:text-2xl py-4 sm:py-6 rounded-lg shadow-[0_4px_0_rgb(23,23,23)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50"
                                             >
                                                 0
