@@ -41,11 +41,11 @@
         const IconX = ({className}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
         const IconCheck = ({className}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>;
 
-        // --- URLs DE AUDIOS ---
+        // --- URLs DE AUDIOS (Rutas Locales para GitHub Pages) ---
         const AUDIO_URLS = {
-            crank: 'https://cdn.pixabay.com/audio/2022/03/10/audio_c3c3a9f0ee.mp3', // Motor arrancando
-            run: 'https://cdn.pixabay.com/audio/2022/01/18/audio_6a30704d9c.mp3', // Motor diésel en ralentí
-            fail: 'https://cdn.pixabay.com/audio/2023/10/16/audio_24e23733e8.mp3'  // Motor apagándose o fallando
+            crank: './audios/arranque.mp3', // Motor arrancando
+            run: './audios/ralenti.mp3', // Motor diésel en ralentí
+            fail: './audios/fallo.mp3'  // Motor apagándose o fallando
         };
 
         // --- CÓDIGOS GANADORES SEPARADOS POR DÍA ---
