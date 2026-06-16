@@ -292,7 +292,7 @@
             };
 
             const handleKeypadPress = (num) => {
-                unlockAudio(); // Llamada clave: Desbloquea audios al primer clic del usuario
+                unlockAudioContext(); // Corregido: Llamada a la función correcta
                 if (status !== 'idle') return;
                 const newCode = code + num;
                 
@@ -302,14 +302,14 @@
             };
 
             const handleDelete = () => {
-                unlockAudio();
+                unlockAudioContext(); // Corregido
                 if (status === 'idle') {
                     setCode(prev => prev.slice(0, -1));
                 }
             };
 
             const handleRandomCode = () => {
-                unlockAudio();
+                unlockAudioContext(); // Corregido
                 if (status === 'idle') {
                     const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
                     setCode(randomNum);
@@ -317,7 +317,7 @@
             };
 
             const handleStart = () => {
-                unlockAudio();
+                unlockAudioContext(); // Corregido
                 if (code.length === 3 || code.length === 4) {
                     setStatus('cranking');
                 } else if (code.length > 0 && code.length < 3) {
